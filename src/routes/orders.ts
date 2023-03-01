@@ -11,6 +11,9 @@ import {body} from "express-validator";
 import mongoose from "mongoose";
 import {Order} from "../models/order";
 import {Item} from "../models/item";
+import {OrderCreatedPublisher} from "../events/publishers/order-created-publisher";
+import {natsWrapper} from "../nats-wrapper";
+import {OrderCancelledPublisher} from "../events/publishers/order-cancelled-publisher";
 
 const EXPIRATION_WINDOW_SECONDS = 15 * 60;
 
@@ -78,6 +81,17 @@ router.post(
 
     await order.save();
 
+    await new OrderCreatedPublisher(natsWrapper.client).publish({
+      id: order.id,
+      status: order.status,
+      userId: order.userId,
+      expiresAt: order.expiresAt.toISOString(),
+      item: {
+        id: item.id,
+        price: item.price
+      }
+    });
+
     res.status(201).send(order);
   }
 );
@@ -86,7 +100,7 @@ router.delete(
   '/:orderId',
   requireAuth,
   async (req: Request, res: Response) => {
-    const order = await Order.findById(req.params.orderId);
+    const order = await Order.findById(req.params.orderId).populate('item');
 
     if (!order) {
       throw new NotFoundError();
@@ -97,6 +111,12 @@ router.delete(
 
     order.status = OrderStatus.Cancelled;
     await order.save();
+    await new OrderCancelledPublisher(natsWrapper.client).publish({
+      id: order.id,
+      item: {
+        id: order.item.id
+      }
+    });
 
     res.status(204).send(order);
   }
