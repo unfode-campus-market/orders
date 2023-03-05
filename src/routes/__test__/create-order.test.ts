@@ -10,6 +10,7 @@ import {natsWrapper} from "../../nats-wrapper";
 // happy cases
 it('should reserve the item associated with the order if everything is valid', async () => {
   const item = Item.build({
+    id: new mongoose.Types.ObjectId().toHexString(),
     title: 'MacBook',
     price: 1000
   });
@@ -37,6 +38,7 @@ it('should return an error if the item associated with the order does not exist'
 
 it('should return an error if the item associated with the order has been reserved', async () => {
   const item = Item.build({
+    id: new mongoose.Types.ObjectId().toHexString(),
     title: 'MacBook',
     price: 1000
   });

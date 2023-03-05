@@ -83,6 +83,7 @@ router.post(
 
     await new OrderCreatedPublisher(natsWrapper.client).publish({
       id: order.id,
+      version: order.version,
       status: order.status,
       userId: order.userId,
       expiresAt: order.expiresAt.toISOString(),
@@ -113,6 +114,7 @@ router.delete(
     await order.save();
     await new OrderCancelledPublisher(natsWrapper.client).publish({
       id: order.id,
+      version: order.version,
       item: {
         id: order.item.id
       }

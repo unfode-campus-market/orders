@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 // happy cases
 it('should return the order with the specified ID if nothing goes wrong', async () => {
   const item = Item.build({
+    id: new mongoose.Types.ObjectId().toHexString(),
     title: 'MacBook',
     price: 1000
   });
@@ -37,6 +38,7 @@ it('should return a 404 error if there does exist an order with the specified ID
 
 it('should return a 401 error if the order associated with the order ID was not created by the current user', async () => {
   const item = Item.build({
+    id: new mongoose.Types.ObjectId().toHexString(),
     title: 'MacBook',
     price: 1000
   });

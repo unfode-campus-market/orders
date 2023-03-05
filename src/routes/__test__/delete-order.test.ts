@@ -4,10 +4,12 @@ import {app} from "../../app";
 import {Order} from "../../models/order";
 import {OrderStatus} from "@campus-market/common";
 import {natsWrapper} from "../../nats-wrapper";
+import mongoose from "mongoose";
 
 // happy cases
 it('should set the status of the order to cancelled', async () => {
   const item = Item.build({
+    id: new mongoose.Types.ObjectId().toHexString(),
     title: 'MacBook',
     price: 1000
   });

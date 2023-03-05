@@ -1,8 +1,10 @@
 import mongoose from "mongoose";
 import {Order} from "./order";
 import {OrderStatus} from "@campus-market/common";
+import {updateIfCurrentPlugin} from "mongoose-update-if-current";
 
 interface ItemAttributes {
+  id: string;
   title: string;
   price: number;
 }
@@ -10,11 +12,13 @@ interface ItemAttributes {
 interface ItemDocument extends mongoose.Document {
   title: string;
   price: number;
+  version: number;
   isReserved(): Promise<boolean>;
 }
 
 interface ItemModel extends mongoose.Model<ItemDocument> {
   build(attributes: ItemAttributes): ItemDocument;
+  findByEvent(event: {id: string, version: number}): Promise<ItemDocument | null>;
 }
 
 const itemSchema = new mongoose.Schema(
@@ -40,8 +44,22 @@ const itemSchema = new mongoose.Schema(
   }
 );
 
+itemSchema.set('versionKey', 'version');
+itemSchema.plugin(updateIfCurrentPlugin);
+
 itemSchema.statics.build = (attributes: ItemAttributes) => {
-  return new Item(attributes);
+  return new Item({
+    _id: attributes.id,
+    title: attributes.title,
+    price: attributes.price
+  });
+};
+
+itemSchema.statics.findByEvent = (event: {id: string, version: number}) => {
+  return Item.findOne({
+    _id: event.id,
+    version: event.version - 1
+  });
 };
 
 itemSchema.methods.isReserved = async function () {

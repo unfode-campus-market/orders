@@ -1,9 +1,11 @@
 import request from "supertest";
 import {Item} from "../../models/item";
 import {app} from "../../app";
+import mongoose from "mongoose";
 
 const buildDummyItem = async () => {
   const item = Item.build({
+    id: new mongoose.Types.ObjectId().toHexString(),
     title: 'MacBook',
     price: 2000
   });
