@@ -1,0 +1,39 @@
+name: deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - ".github/workflow/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    
+    - name: Checkout main
+      uses: actions/checkout@v2
+
+    - name: Build Docker image
+      run: docker build -t itsmyduty/orders .
+
+    - name: Docker login
+      run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      env:
+        DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
+        DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+    
+    - name: Push image to Docker Hub
+      run: docker push itsmyduty/orders
+
+    - name: Install doctl and log in
+      uses: digitalocean/action-doctl@v2
+      with:
+        token: ${{secrets.DIGITALOCEAN_ACCESS_TOKEN}}
+    
+    - name: Connect to K8s cluster
+      run: doctl kubernetes cluster kubeconfig save main
+    
+    - name: Restart K8s deployment to use the latest Docker image
+      run: kubectl rollout restart deployment orders-depl
